@@ -1,6 +1,6 @@
 # Contract Manager
 # Author: OH.HALIM
-# Version: 1.0.0
+# Version: 1.1.0
 import tkinter as tk
 from tkinter import ttk
 from ttkbootstrap import Style, Window
@@ -16,7 +16,7 @@ import re
 class ContractManager:
     def __init__(self, root):
         self.root = root
-        self.version = "1.0.0"
+        self.version = "1.1.0"
         self.author = "OH.HALIM"
         self.root.title(f"Contract Duration Manager v{self.version} - by {self.author}")
         self.root.geometry("1200x800")
@@ -47,8 +47,8 @@ class ContractManager:
                 "add_contract_frame": "Add New Contract",
                 "prestataire": "Prestataire:",
                 "contract_name": "Contract Name:",
-                "operation": "Operation:",
-                "fournisseur": "Fournisseur:",
+                "activite": "Activity:",
+                #"fournisseur": "Fournisseur:",
                 "start_date": "Start Date (DD-MM-YYYY):",
                 "duration_months": "Duration (Months):",
                 "add_button": "Add Contract",
@@ -60,8 +60,8 @@ class ContractManager:
                 "check_expired_button": "Check Expired",
                 "column_prestataire": "Prestataire",
                 "column_contract": "Contract",
-                "column_operation": "Operation",
-                "column_fournisseur": "Fournisseur",
+                "column_activite": "Activity",
+                #"column_fournisseur": "Fournisseur",
                 "column_start_date": "Start Date",
                 "column_duration": "Duration",
                 "column_expiration": "Expiration Date",
@@ -115,7 +115,15 @@ class ContractManager:
                 "filter_expiring": "Expiring Soon",
                 "filter_expired": "Expired",
                 "no_results": "No matching contracts found.",
-                "search_results": "Search Results"
+                "search_results": "Search Results",
+                "column_payments": "Payments",
+                "payment_dzd": "100% DZD",
+                "payment_usd_60_40": "60% USD, 40% DZD",
+                "payment_usd_70_30": "70% USD, 30% DZD",
+                "payment_usd_50_50": "50% USD, 50% DZD",
+                "column_payment_method": "Payment Method",
+                "payment_method_invoice": "exchange before the month of invoice",
+                "payment_method_realisation": "exchange before the month of realisation",
             },
             "fr": {
                 "btn_yes": "Oui",
@@ -126,8 +134,8 @@ class ContractManager:
                 "add_contract_frame": "Ajouter un Nouveau Contrat",
                 "prestataire": "Prestataire:",
                 "contract_name": "Nom du Contrat:",
-                "operation": "Opération:",
-                "fournisseur": "Fournisseur:",
+                "activite": "Activité:",
+                #"fournisseur": "Fournisseur:",
                 "start_date": "Date de Début (JJ-MM-AAAA):",
                 "duration_months": "Durée (Mois):",
                 "add_button": "Ajouter Contrat",
@@ -139,8 +147,8 @@ class ContractManager:
                 "check_expired_button": "Vérifier Expirés",
                 "column_prestataire": "Prestataire",
                 "column_contract": "Contrat",
-                "column_operation": "Opération",
-                "column_fournisseur": "Fournisseur",
+                "column_activite": "Activité",
+                #"column_fournisseur": "Fournisseur",
                 "column_start_date": "Date de Début",
                 "column_duration": "Durée",
                 "column_expiration": "Date d'Expiration",
@@ -191,7 +199,15 @@ class ContractManager:
                 "filter_expiring": "Expiration Proche",
                 "filter_expired": "Expirés",
                 "no_results": "Aucun contrat correspondant trouvé.",
-                "search_results": "Résultats de Recherche"
+                "search_results": "Résultats de Recherche",
+                "column_payments": "Paiements",
+                "payment_dzd": "100% DZD",
+                "payment_usd_60_40": "60% USD, 40% DZD",
+                "payment_usd_70_30": "70% USD, 30% DZD",
+                "payment_usd_50_50": "50% USD, 50% DZD",
+                "column_payment_method": "Méthode de paiement",
+                "payment_method_invoice": "change mois avant la facture",
+                "payment_method_realisation": "change mois avant la réalisation",
             }
         }
         
@@ -320,38 +336,60 @@ class ContractManager:
         self.contract_name = ttk.Entry(self.input_frame, width=30)
         self.contract_name.grid(row=0, column=3, padx=10, pady=10)
         
-        # Operation with modern styling
-        self.operation_label = ttk.Label(self.input_frame,
-                                       text=self.get_text("operation"),
+        # Activite with modern styling
+        self.activite_label = ttk.Label(self.input_frame,
+                                       text=self.get_text("activite"),
                                        style="Modern.TLabel")
-        self.operation_label.grid(row=1, column=0, sticky=W, padx=10, pady=10)
-        self.operation = ttk.Entry(self.input_frame, width=30)
-        self.operation.grid(row=1, column=1, padx=10, pady=10)
+        self.activite_label.grid(row=1, column=0, sticky=W, padx=10, pady=10)
+        self.activite = ttk.Entry(self.input_frame, width=30)
+        self.activite.grid(row=1, column=1, padx=10, pady=10)
         
-        # Fournisseur with modern styling
-        self.fournisseur_label = ttk.Label(self.input_frame,
-                                         text=self.get_text("fournisseur"),
-                                         style="Modern.TLabel")
-        self.fournisseur_label.grid(row=1, column=2, sticky=W, padx=10, pady=10)
-        self.fournisseur = ttk.Entry(self.input_frame, width=30)
-        self.fournisseur.grid(row=1, column=3, padx=10, pady=10)
+        # Payment Currency Combobox
+        self.payment_label = ttk.Label(self.input_frame,
+                                       text=self.get_text("column_payments"),
+                                       style="Modern.TLabel")
+        self.payment_label.grid(row=1, column=2, sticky=W, padx=10, pady=10)
+        self.payment_var = tk.StringVar()
+        self.payment_combo = ttk.Combobox(self.input_frame, textvariable=self.payment_var, width=18, state="readonly")
+        self.payment_combo['values'] = (
+            self.get_text("payment_dzd"),
+            self.get_text("payment_usd_60_40"),
+            self.get_text("payment_usd_70_30"),
+            self.get_text("payment_usd_50_50"),
+        )
+        self.payment_combo.current(0)
+        self.payment_combo.grid(row=1, column=3, padx=10, pady=10)
+        
+        # Payment Method Combobox
+        self.payment_method_label = ttk.Label(self.input_frame,
+                                              text=self.get_text("column_payment_method"),
+                                              style="Modern.TLabel")
+        self.payment_method_label.grid(row=2, column=2, sticky=W, padx=10, pady=10)
+        self.payment_method_var = tk.StringVar()
+        self.payment_method_combo = ttk.Combobox(self.input_frame, textvariable=self.payment_method_var, width=30, state="readonly")
+        self.payment_method_combo['values'] = (
+            self.get_text("payment_method_invoice"),
+            self.get_text("payment_method_realisation"),
+        )
+        self.payment_method_combo.current(0)
+        self.payment_method_combo.grid(row=2, column=3, padx=10, pady=10)
         
         # Start Date with modern styling
         self.start_date_label = ttk.Label(self.input_frame,
                                         text=self.get_text("start_date"),
                                         style="Modern.TLabel")
-        self.start_date_label.grid(row=2, column=0, sticky=W, padx=10, pady=10)
+        self.start_date_label.grid(row=3, column=0, sticky=W, padx=10, pady=10)
         self.start_date = ttk.Entry(self.input_frame, width=12)
-        self.start_date.grid(row=2, column=1, padx=10, pady=10)
+        self.start_date.grid(row=3, column=1, padx=10, pady=10)
         self.start_date.insert(0, datetime.datetime.now().strftime("%d-%m-%Y"))
         
         # Duration with modern styling
         self.duration_label = ttk.Label(self.input_frame,
                                       text=self.get_text("duration_months"),
                                       style="Modern.TLabel")
-        self.duration_label.grid(row=2, column=2, sticky=W, padx=10, pady=10)
+        self.duration_label.grid(row=3, column=2, sticky=W, padx=10, pady=10)
         self.months = ttk.Spinbox(self.input_frame, from_=1, to=1200, width=5)
-        self.months.grid(row=2, column=3, padx=10, pady=10)
+        self.months.grid(row=3, column=3, padx=10, pady=10)
         self.months.insert(0, "1")
         
         # Add Contract Button with modern styling
@@ -359,11 +397,11 @@ class ContractManager:
                                    text=self.get_text("add_button"),
                                    command=self.add_contract,
                                    style="Modern.TButton")
-        self.add_button.grid(row=3, column=0, columnspan=4, padx=10, pady=10)
+        self.add_button.grid(row=4, column=0, columnspan=4, padx=10, pady=10)
         
         # Create search and filter frame
         self.search_frame = ttk.Frame(self.main_frame, style="Modern.TFrame")
-        self.search_frame.grid(row=2, column=0, columnspan=2, sticky=(E, W), pady=(0, 15))
+        self.search_frame.grid(row=5, column=0, columnspan=2, sticky=(E, W), pady=(0, 15))
         
         # Search entry
         self.search_var = tk.StringVar()
@@ -410,13 +448,13 @@ class ContractManager:
         
         # Create a Frame to hold both treeview and status column
         self.display_frame = ttk.Frame(self.main_frame, style="Modern.TFrame")
-        self.display_frame.grid(row=3, column=0, columnspan=2, sticky=(N, S, E, W))
+        self.display_frame.grid(row=6, column=0, columnspan=2, sticky=(N, S, E, W))
         
         # Create a Treeview with all columns including Amendments column
         self.tree = ttk.Treeview(self.display_frame,
-                                columns=("Prestataire", "Contract", "Operation", "Fournisseur",
-                                       "Start Date", "Duration", "Expiration Date", 
-                                       "Time Remaining", "Status", "Amendments"),
+                                columns=("Prestataire", "Contract", "Activite", 
+                                         "Payments", "Payment Method", "Start Date", "Duration", "Expiration Date", 
+                                         "Time Remaining", "Status", "Amendments"),
                                 show="headings",
                                 style="Treeview")
         
@@ -426,8 +464,9 @@ class ContractManager:
         # Set column widths
         self.tree.column("Prestataire", width=150)
         self.tree.column("Contract", width=150)
-        self.tree.column("Operation", width=150)
-        self.tree.column("Fournisseur", width=150)
+        self.tree.column("Activite", width=150)
+        self.tree.column("Payments", width=120)
+        self.tree.column("Payment Method", width=180)
         self.tree.column("Start Date", width=120)
         self.tree.column("Duration", width=120)
         self.tree.column("Expiration Date", width=120)
@@ -455,7 +494,7 @@ class ContractManager:
         
         # Buttons frame with modern styling
         self.button_frame = ttk.Frame(self.main_frame, style="Modern.TFrame")
-        self.button_frame.grid(row=4, column=0, columnspan=2, pady=30)
+        self.button_frame.grid(row=7, column=0, columnspan=2, pady=30)
         
         # Save and Load buttons with modern styling
         self.save_button = ttk.Button(self.button_frame,
@@ -476,16 +515,23 @@ class ContractManager:
                                       style="Modern.TButton")
         self.delete_button.grid(row=0, column=2, padx=8)
         
+        # Add Edit button
+        self.edit_button = ttk.Button(self.button_frame,
+                                      text="Edit",
+                                      command=self.edit_contract,
+                                      style="Modern.TButton")
+        self.edit_button.grid(row=0, column=3, padx=8)
+        
         # Add extension button with modern styling
         self.extension_button = ttk.Button(self.button_frame,
                                          text=self.get_text("extension_button"),
                                          command=self.add_contract_extension,
                                          style="Modern.TButton")
-        self.extension_button.grid(row=0, column=3, padx=8)
+        self.extension_button.grid(row=0, column=4, padx=8)
         
         # Footer frame for version and author info
         self.footer_frame = ttk.Frame(self.root, style="Modern.TFrame")
-        self.footer_frame.grid(row=5, column=0, sticky=(E, W), pady=(0, 0))
+        self.footer_frame.grid(row=8, column=0, sticky=(E, W), pady=(0, 0))
         self.footer_label = ttk.Label(self.footer_frame,
                                     text=f"v{self.version}  |  by {self.author}",
                                     style="Modern.TLabel",
@@ -496,7 +542,7 @@ class ContractManager:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         self.main_frame.columnconfigure(0, weight=1)
-        self.main_frame.rowconfigure(3, weight=1)  # Display frame should expand
+        self.main_frame.rowconfigure(6, weight=1)  # Display frame should expand
         
         # Bind tree selection to update status displays
         self.tree.bind("<<TreeviewSelect>>", self.on_tree_select)
@@ -513,6 +559,9 @@ class ContractManager:
         
         # Check for expired contracts on startup
         self.root.after(1000, self.check_expired_contracts_silently)
+        
+        # For editing
+        self.editing_item_id = None
     
     def get_text(self, key):
         """Get translated text for a key."""
@@ -530,8 +579,8 @@ class ContractManager:
         self.input_frame.config(text=self.get_text("add_contract_frame"))
         self.prestataire_label.config(text=self.get_text("prestataire"))
         self.contract_name_label.config(text=self.get_text("contract_name"))
-        self.operation_label.config(text=self.get_text("operation"))
-        self.fournisseur_label.config(text=self.get_text("fournisseur"))
+        self.activite_label.config(text=self.get_text("activite"))
+        #self.fournisseur_label.config(text=self.get_text("fournisseur"))
         self.start_date_label.config(text=self.get_text("start_date"))
         self.duration_label.config(text=self.get_text("duration_months"))
         self.add_button.config(text=self.get_text("add_button"))
@@ -552,6 +601,25 @@ class ContractManager:
         
         # Refresh all items in the treeview to update status and duration text
         self.refresh_treeview_items()
+        
+        # Update payment options in combobox
+        self.payment_combo['values'] = (
+            self.get_text("payment_dzd"),
+            self.get_text("payment_usd_60_40"),
+            self.get_text("payment_usd_70_30"),
+            self.get_text("payment_usd_50_50"),
+        )
+        if self.payment_var.get() not in self.payment_combo['values']:
+            self.payment_combo.current(0)
+        
+        # Update payment method options in combobox
+        self.payment_method_label.config(text=self.get_text("column_payment_method"))
+        self.payment_method_combo['values'] = (
+            self.get_text("payment_method_invoice"),
+            self.get_text("payment_method_realisation"),
+        )
+        if self.payment_method_var.get() not in self.payment_method_combo['values']:
+            self.payment_method_combo.current(0)
     
     def update_search_placeholder(self):
         """Update search entry placeholder text based on current language."""
@@ -628,7 +696,7 @@ class ContractManager:
                 status_text_from_tree = values[self.get_text("column_status")]
                 
                 # If the contract is expired (days remaining is negative or status is explicitly expired)
-                if days_remaining < 0 or status_text_from_tree in [self.get_text('status_expired'), self.translations['en']['status_expired']]:
+                if days_remaining < 0:
                     # Access prestataire and contract name using column identifiers from the mapped values
                     prestataire_name = values[self.get_text("column_prestataire")]
                     contract_name = values[self.get_text("column_contract")]
@@ -665,7 +733,7 @@ class ContractManager:
                 status_text_from_tree = values[self.get_text("column_status")]
                 
                 # If the contract is expired (days remaining is negative or status is explicitly expired)
-                if days_remaining < 0 or status_text_from_tree in [self.get_text('status_expired'), self.translations['en']['status_expired']]:
+                if days_remaining < 0:
                     # Access prestataire and contract name using column identifiers from the mapped values
                     prestataire_name = values[self.get_text("column_prestataire")]
                     contract_name = values[self.get_text("column_contract")]
@@ -918,18 +986,19 @@ class ContractManager:
                     # Fallback if regex fails or format is unexpected
                     new_amendment_str = str(current_amendment_str) # Keep the original if format is unknown
             
-            # Create updated item values tuple
+            # Create updated item values tuple in the correct order
             new_item_values = (
-                values[self.get_text("column_prestataire")],  # Prestataire (string)
-                values[self.get_text("column_contract")],  # Contract name (string)
-                values[self.get_text("column_operation")], # Operation (string)
-                values[self.get_text("column_fournisseur")], # Fournisseur (string)
-                values[self.get_text("column_start_date")], # Start Date (string)
-                new_duration_str,  # Updated duration (string)
-                new_expiration_date_obj.strftime("%d-%m-%Y"),  # New expiration date (formatted string)
-                time_remaining_str, # Updated time remaining (string)
-                status_text,  # Updated status (string)
-                new_amendment_str  # Updated amendment (string)
+                values[self.get_text("column_prestataire")],  # 0
+                values[self.get_text("column_contract")],     # 1
+                values[self.get_text("column_activite")],     # 2
+                values[self.get_text("column_payments")],     # 3
+                values[self.get_text("column_payment_method")], # 4
+                values[self.get_text("column_start_date")],   # 5
+                new_duration_str,                              # 6
+                new_expiration_date_obj.strftime("%d-%m-%Y"), # 7
+                time_remaining_str,                            # 8
+                status_text,                                   # 9
+                new_amendment_str                              # 10
             )
             
             # Update the item in the treeview
@@ -970,7 +1039,7 @@ class ContractManager:
             # Use all_treeview_items instead of directly accessing the treeview
             for item_values in self.all_treeview_items:
                 # Parse expiration date to calculate days remaining
-                expiration_date_str = item_values[6]  # Expiration date is at index 6
+                expiration_date_str = item_values[7]  # Expiration date is at index 7
                 expiration_date = datetime.datetime.strptime(expiration_date_str, "%d-%m-%Y").date()
                 
                 today = datetime.datetime.now().date()
@@ -979,15 +1048,16 @@ class ContractManager:
                 data.append({
                     'Prestataire': item_values[0],
                     'Contract Name': item_values[1],
-                    'Operation': item_values[2],
-                    'Fournisseur': item_values[3],
-                    'Start Date': item_values[4],
-                    'Duration': item_values[5],
-                    'Expiration Date': item_values[6],
+                    'Activite': item_values[2],
+                    'Payments': item_values[3],
+                    'Payment Method': item_values[4],
+                    'Start Date': item_values[5],
+                    'Duration': item_values[6],
+                    'Expiration Date': item_values[7],
                     'Days Remaining': days_remaining,  # Store raw number for calculations
-                    'Time Remaining': item_values[7],  # Store formatted string for display
-                    'Status': item_values[8],
-                    'Amendments': item_values[9]   # Store amendments info
+                    'Time Remaining': item_values[8],  # Store formatted string for display
+                    'Status': item_values[9],
+                    'Amendments': item_values[10]   # Store amendments info
                 })
             
             df = pd.DataFrame(data)
@@ -1083,7 +1153,13 @@ class ContractManager:
                 # Add items from Excel
                 for _, row in df.iterrows():
                     # Get days remaining 
-                    days_remaining = int(row['Days Remaining'])
+                    if 'Days Remaining' in row and not pd.isnull(row['Days Remaining']):
+                        days_remaining = int(row['Days Remaining'])
+                    else:
+                        # Fallback: calculate from Expiration Date
+                        expiration_date = datetime.datetime.strptime(str(row['Expiration Date']), "%d-%m-%Y").date()
+                        today = datetime.datetime.now().date()
+                        days_remaining = (expiration_date - today).days
                     
                     # Determine status based on days remaining
                     if days_remaining < 0:
@@ -1121,16 +1197,17 @@ class ContractManager:
                     
                     # Create a tuple of values in the correct order
                     item_values = (
-                        row['Prestataire'],
-                        row['Contract Name'],
-                        row['Operation'],
-                        row['Fournisseur'],
-                        row['Start Date'],
-                        row['Duration'],
-                        row['Expiration Date'],
-                        time_remaining,
-                        status,
-                        amendments_text
+                        row['Prestataire'],   # 0
+                        row['Contract Name'], # 1
+                        row['Activite'],      # 2
+                        row['Payments'],      # 3
+                        row['Payment Method'], # 4
+                        row['Start Date'],    # 5
+                        row['Duration'],      # 6
+                        row['Expiration Date'], # 7
+                        time_remaining,       # 8
+                        status,               # 9
+                        amendments_text       # 10
                     )
                     
                     # Add to all_treeview_items for search/filter functionality
@@ -1231,89 +1308,86 @@ class ContractManager:
         dialog.wait_window()
         return result['value']
 
-def add_contract(self):
-    """Add a new contract to the list and treeview."""
-    # Validate contract name
-    if not self.contract_name.get().strip():
-        messagebox.showwarning(self.get_text("msg_warning"), self.get_text("msg_enter_name"))
-        return
-    
-    # Validate start date format
-    start_date_str = self.start_date.get().strip()
-    try:
-        start_date = datetime.datetime.strptime(start_date_str, "%d-%m-%Y")
-    except ValueError:
-        messagebox.showwarning(self.get_text("msg_warning"), self.get_text("msg_invalid_date"))
-        return
-    
-    # Get duration in months
-    try:
-        months = int(self.months.get())
-    except ValueError:
-        months = 1
-    
-    # Calculate expiration date
-    expiration_date = start_date + relativedelta(months=months)
-    
-    # Calculate days remaining
-    today = datetime.datetime.now().date()
-    days_remaining = (expiration_date.date() - today).days
-    
-    # Format time remaining
-    time_remaining = self.format_time_remaining(days_remaining)
-    
-    # Determine status based on days remaining
-    if days_remaining < 0:
-        status = self.get_text('status_expired')
-        tag = 'expired'
-    elif days_remaining < 35:
-        status = self.get_text('status_expiring')
-        tag = 'critical'
-    elif days_remaining <= 70:
-        status = self.get_text('status_expiring')
-        tag = 'warning'
-    else:
-        status = self.get_text('status_active')
-        tag = 'active'
-    
-    # Format duration text
-    if months == 1:
-        duration_text = f"1 {self.get_text('time_month')}"
-    else:
-        duration_text = f"{months} {self.get_text('time_months')}"
-    
-    # Create a tuple of values in the correct order
-    item_values = (
-        self.prestataire.get(),
-        self.contract_name.get(),
-        self.operation.get(),
-        self.fournisseur.get(),
-        start_date_str,
-        duration_text,
-        expiration_date.strftime("%d-%m-%Y"),
-        time_remaining,
-        status,
-        self.get_text("no_avenants")  # No amendments for new contracts
-    )
-    
-    # Add to all_treeview_items for search/filter functionality
-    self.all_treeview_items.append(item_values)
-    
-    # Add to treeview with appropriate tag
-    self.tree.insert("", "end", values=item_values, tags=(tag,))
-    
-    # Mark that there are unsaved changes
-    self.unsaved_changes = True
-    
-    # Clear entry fields for next contract
-    self.contract_name.delete(0, tk.END)
-    self.operation.delete(0, tk.END)
-    self.fournisseur.delete(0, tk.END)
-    # Don't clear prestataire to make it easier to add multiple contracts
-    # for the same prestataire
-    
-    # Set focus to contract name field for the next entry
-    self.contract_name.focus_set()
+    def add_contract(self):
+        """Add a new contract to the list and treeview."""
+        name = self.contract_name.get().strip()
+        if not name:
+            messagebox.showerror(self.get_text("msg_error"), self.get_text("msg_enter_name"))
+            return
+
+        try:
+            # Parse start date
+            start_date_str = self.start_date.get().strip()
+            start_date = datetime.datetime.strptime(start_date_str, "%d-%m-%Y")
+
+            # Get duration in months
+            months = int(self.months.get())
+
+            # Calculate expiration date
+            expiration_date = start_date + relativedelta(months=months)
+
+            # Calculate days remaining
+            today = datetime.datetime.now().date()
+            days_remaining = (expiration_date.date() - today).days
+
+            # Format time remaining
+            time_remaining = self.format_time_remaining(days_remaining)
+
+            # Determine status and tag
+            if days_remaining < 0:
+                status = self.get_text('status_expired')
+                tag = 'expired'
+            elif days_remaining < 35:
+                status = self.get_text('status_expiring')
+                tag = 'critical'
+            elif days_remaining <= 70:
+                status = self.get_text('status_expiring')
+                tag = 'warning'
+            else:
+                status = self.get_text('status_active')
+                tag = 'active'
+
+            # Format duration
+            if months == 1:
+                duration_text = f"1 {self.get_text('time_month')}"
+            else:
+                duration_text = f"{months} {self.get_text('time_months')}"
+
+            # Determine payments value
+            payments_text = self.payment_var.get()
+
+            # Create tuple of values (column order must match Treeview and Excel)
+            item_values = (
+                self.prestataire.get(),   # 0
+                name,                    # 1
+                self.activite.get(),     # 2
+                payments_text,           # 3
+                self.payment_method_var.get(), # 4
+                start_date.strftime("%d-%m-%Y"),  # 5
+                duration_text,           # 6
+                expiration_date.strftime("%d-%m-%Y"),  # 7
+                time_remaining,          # 8
+                status,                  # 9
+                self.get_text("no_avenants")  # 10
+            )
+
+            # Add to all_treeview_items for search/filter
+            self.all_treeview_items.append(item_values)
+
+            # Add to treeview
+            item_id = self.tree.insert("", "end", values=item_values, tags=(tag,))
+            self.apply_status_color(item_id, status, tag)
+
+            # Mark unsaved changes
+            self.unsaved_changes = True
+
+            # Clear input fields
+            self.contract_name.delete(0, tk.END)
+            self.months.delete(0, tk.END)
+            self.months.insert(0, "1")
+
+        except ValueError as e:
+            messagebox.showerror(self.get_text("msg_error"), str(e))
 
     def search_contracts(self):
         """Search contracts by contract name or prestataire."""
@@ -1373,8 +1447,9 @@ def add_contract(self):
         """Update treeview headings based on the current language."""
         self.tree.heading("Prestataire", text=self.get_text("column_prestataire"))
         self.tree.heading("Contract", text=self.get_text("column_contract"))
-        self.tree.heading("Operation", text=self.get_text("column_operation"))
-        self.tree.heading("Fournisseur", text=self.get_text("column_fournisseur"))
+        self.tree.heading("Activite", text=self.get_text("column_activite"))
+        self.tree.heading("Payments", text=self.get_text("column_payments"))
+        self.tree.heading("Payment Method", text=self.get_text("column_payment_method"))
         self.tree.heading("Start Date", text=self.get_text("column_start_date"))
         self.tree.heading("Duration", text=self.get_text("column_duration"))
         self.tree.heading("Expiration Date", text=self.get_text("column_expiration"))
@@ -1404,10 +1479,167 @@ def add_contract(self):
             parts.append(f"{days} {self.get_text('time_days') if days > 1 else self.get_text('time_day')}")
         return prefix + ", ".join(parts)
 
+    def edit_contract(self):
+        """Load selected contract into input fields for editing."""
+        selection = self.tree.selection()
+        if not selection:
+            messagebox.showwarning(self.get_text("msg_warning"), "Please select a contract to edit.")
+            return
+        item_id = selection[0]
+        item_values = self.tree.item(item_id)['values']
+        # Fill input fields
+        self.prestataire.delete(0, tk.END)
+        self.prestataire.insert(0, item_values[0])
+        self.contract_name.delete(0, tk.END)
+        self.contract_name.insert(0, item_values[1])
+        self.activite.delete(0, tk.END)
+        self.activite.insert(0, item_values[2])
+        # Set payment option to match the value in the row
+        if item_values[3] in self.payment_combo['values']:
+            self.payment_var.set(item_values[3])
+        else:
+            self.payment_var.set(self.get_text("payment_dzd"))
+        self.start_date.delete(0, tk.END)
+        self.start_date.insert(0, item_values[5])
+        # Extract months from duration (first number found)
+        import re
+        months_match = re.search(r'(\d+)', str(item_values[6]))
+        self.months.delete(0, tk.END)
+        self.months.insert(0, months_match.group(1) if months_match else "1")
+        # Set payment method option to match the value in the row
+        if item_values[4] in self.payment_method_combo['values']:
+            self.payment_method_var.set(item_values[4])
+        else:
+            self.payment_method_var.set(self.get_text("payment_method_invoice"))
+        # Set editing state
+        self.editing_item_id = item_id
+        self.add_button.config(text="Update Contract", command=self.update_contract)
+    
+    def update_contract(self):
+        """Update the selected contract with new values from input fields."""
+        if not self.editing_item_id:
+            return
+        name = self.contract_name.get().strip()
+        if not name:
+            messagebox.showerror(self.get_text("msg_error"), self.get_text("msg_enter_name"))
+            return
+        try:
+            start_date_str = self.start_date.get().strip()
+            start_date = datetime.datetime.strptime(start_date_str, "%d-%m-%Y")
+            months = int(self.months.get())
+            expiration_date = start_date + relativedelta(months=months)
+            today = datetime.datetime.now().date()
+            days_remaining = (expiration_date.date() - today).days
+            time_remaining = self.format_time_remaining(days_remaining)
+            if days_remaining < 0:
+                status = self.get_text('status_expired')
+                tag = 'expired'
+            elif days_remaining < 35:
+                status = self.get_text('status_expiring')
+                tag = 'critical'
+            elif days_remaining <= 70:
+                status = self.get_text('status_expiring')
+                tag = 'warning'
+            else:
+                status = self.get_text('status_active')
+                tag = 'active'
+            if months == 1:
+                duration_text = f"1 {self.get_text('time_month')}"
+            else:
+                duration_text = f"{months} {self.get_text('time_months')}"
+            payments_text = self.payment_var.get()
+            # Keep amendments from the old row
+            old_values = self.tree.item(self.editing_item_id)['values']
+            amendments = old_values[10] if len(old_values) > 10 else self.get_text("no_avenants")
+            # Build new values
+            new_item_values = (
+                self.prestataire.get(),
+                name,
+                self.activite.get(),
+                payments_text,
+                self.payment_method_var.get(),
+                start_date.strftime("%d-%m-%Y"),
+                duration_text,
+                expiration_date.strftime("%d-%m-%Y"),
+                time_remaining,
+                status,
+                amendments
+            )
+            self.tree.item(self.editing_item_id, values=new_item_values, tags=(tag,))
+            # Update all_treeview_items
+            for i, item in enumerate(self.all_treeview_items):
+                if (item[0] == old_values[0] and item[1] == old_values[1]):
+                    self.all_treeview_items[i] = new_item_values
+                    break
+            self.apply_status_color(self.editing_item_id, status, tag)
+            self.unsaved_changes = True
+            # Reset editing state
+            self.editing_item_id = None
+            self.add_button.config(text=self.get_text("add_button"), command=self.add_contract)
+            self.contract_name.delete(0, tk.END)
+            self.months.delete(0, tk.END)
+            self.months.insert(0, "1")
+        except ValueError as e:
+            messagebox.showerror(self.get_text("msg_error"), str(e))
+
+    def filter_contracts(self):
+        """Filter contracts by status using the filter combobox."""
+        selected_filter = self.filter_var.get()
+        # Clear the treeview
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        # Determine which status to filter by
+        status_map = {
+            self.get_text("filter_active"): self.get_text("status_active"),
+            self.get_text("filter_expiring"): self.get_text("status_expiring"),
+            self.get_text("filter_expired"): self.get_text("status_expired"),
+        }
+        if selected_filter == self.get_text("filter_all"):
+            # Show all
+            for item_values in self.all_treeview_items:
+                tag = 'active'
+                status = item_values[9]
+                if status == self.get_text('status_expired'):
+                    tag = 'expired'
+                elif status == self.get_text('status_expiring'):
+                    tag = 'critical'
+                elif status == self.get_text('status_active'):
+                    tag = 'active'
+                elif status == self.get_text('status_expiring'):
+                    tag = 'warning'
+                self.tree.insert("", "end", values=item_values, tags=(tag,))
+        else:
+            # Filter by selected status
+            filter_status = status_map.get(selected_filter)
+            found = False
+            for item_values in self.all_treeview_items:
+                status = item_values[9]
+                if status == filter_status:
+                    tag = 'active'
+                    if status == self.get_text('status_expired'):
+                        tag = 'expired'
+                    elif status == self.get_text('status_expiring'):
+                        tag = 'critical'
+                    elif status == self.get_text('status_active'):
+                        tag = 'active'
+                    elif status == self.get_text('status_expiring'):
+                        tag = 'warning'
+                    self.tree.insert("", "end", values=item_values, tags=(tag,))
+                    found = True
+            if not found:
+                messagebox.showinfo(self.get_text("search_results"), self.get_text("no_results"))
+
 if __name__ == "__main__":
-    root = Window(themename="cosmo")  # Use ttkbootstrap's Window with a modern theme
-    app = ContractManager(root)
-    root.protocol("WM_DELETE_WINDOW", app.on_closing)
-    root.mainloop()
+    root = Window(themename="cosmo")
+    root.iconbitmap("icon.ico")
+    try:
+        app = ContractManager(root)
+        root.protocol("WM_DELETE_WINDOW", app.on_closing)
+        root.mainloop()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        root.destroy()
     
 
+    
