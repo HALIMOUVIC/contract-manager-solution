@@ -597,8 +597,8 @@ class ContractManager:
             elif current_value == self.translations["en"]["filter_expired"] or current_value == self.translations["fr"]["filter_expired"]:
                 self.filter_var.set(self.get_text("filter_expired"))
             else:
-            # Default to "All" if no selection
-            self.filter_var.set(self.get_text("filter_all"))
+                # Default to "All" if no selection
+                self.filter_var.set(self.get_text("filter_all"))
     
     def apply_status_color(self, item_id, status, tag):
         """Apply color tag to status cell."""
@@ -1306,6 +1306,24 @@ class ContractManager:
     def on_tree_select(self, event):
         """Handle tree selection event (currently does nothing)."""
         pass
+
+    def format_time_remaining(self, days_remaining):
+        """Format the time remaining as a human-readable string."""
+        if days_remaining < 0:
+            days_remaining = abs(days_remaining)
+            prefix = "-"
+        else:
+            prefix = ""
+        years, rem = divmod(days_remaining, 365)
+        months, days = divmod(rem, 30)
+        parts = []
+        if years > 0:
+            parts.append(f"{years} {self.get_text('time_years') if years > 1 else self.get_text('time_year')}")
+        if months > 0:
+            parts.append(f"{months} {self.get_text('time_months') if months > 1 else self.get_text('time_month')}")
+        if days > 0 or not parts:
+            parts.append(f"{days} {self.get_text('time_days') if days > 1 else self.get_text('time_day')}")
+        return prefix + ", ".join(parts)
 
 if __name__ == "__main__":
     root = Window(themename="cosmo")  # Use ttkbootstrap's Window with a modern theme
