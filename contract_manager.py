@@ -1231,10 +1231,89 @@ class ContractManager:
         dialog.wait_window()
         return result['value']
 
-    def add_contract(self):
-        """Add a new contract to the list and treeview."""
-        # Implement your logic here, or use your previous code for adding a contract
-        pass
+def add_contract(self):
+    """Add a new contract to the list and treeview."""
+    # Validate contract name
+    if not self.contract_name.get().strip():
+        messagebox.showwarning(self.get_text("msg_warning"), self.get_text("msg_enter_name"))
+        return
+    
+    # Validate start date format
+    start_date_str = self.start_date.get().strip()
+    try:
+        start_date = datetime.datetime.strptime(start_date_str, "%d-%m-%Y")
+    except ValueError:
+        messagebox.showwarning(self.get_text("msg_warning"), self.get_text("msg_invalid_date"))
+        return
+    
+    # Get duration in months
+    try:
+        months = int(self.months.get())
+    except ValueError:
+        months = 1
+    
+    # Calculate expiration date
+    expiration_date = start_date + relativedelta(months=months)
+    
+    # Calculate days remaining
+    today = datetime.datetime.now().date()
+    days_remaining = (expiration_date.date() - today).days
+    
+    # Format time remaining
+    time_remaining = self.format_time_remaining(days_remaining)
+    
+    # Determine status based on days remaining
+    if days_remaining < 0:
+        status = self.get_text('status_expired')
+        tag = 'expired'
+    elif days_remaining < 35:
+        status = self.get_text('status_expiring')
+        tag = 'critical'
+    elif days_remaining <= 70:
+        status = self.get_text('status_expiring')
+        tag = 'warning'
+    else:
+        status = self.get_text('status_active')
+        tag = 'active'
+    
+    # Format duration text
+    if months == 1:
+        duration_text = f"1 {self.get_text('time_month')}"
+    else:
+        duration_text = f"{months} {self.get_text('time_months')}"
+    
+    # Create a tuple of values in the correct order
+    item_values = (
+        self.prestataire.get(),
+        self.contract_name.get(),
+        self.operation.get(),
+        self.fournisseur.get(),
+        start_date_str,
+        duration_text,
+        expiration_date.strftime("%d-%m-%Y"),
+        time_remaining,
+        status,
+        self.get_text("no_avenants")  # No amendments for new contracts
+    )
+    
+    # Add to all_treeview_items for search/filter functionality
+    self.all_treeview_items.append(item_values)
+    
+    # Add to treeview with appropriate tag
+    self.tree.insert("", "end", values=item_values, tags=(tag,))
+    
+    # Mark that there are unsaved changes
+    self.unsaved_changes = True
+    
+    # Clear entry fields for next contract
+    self.contract_name.delete(0, tk.END)
+    self.operation.delete(0, tk.END)
+    self.fournisseur.delete(0, tk.END)
+    # Don't clear prestataire to make it easier to add multiple contracts
+    # for the same prestataire
+    
+    # Set focus to contract name field for the next entry
+    self.contract_name.focus_set()
 
     def search_contracts(self):
         """Search contracts by contract name or prestataire."""
